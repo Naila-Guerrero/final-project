@@ -75,6 +75,22 @@ def search_movies(movies,search_term):
     print("No matching movies found")
    
 
+def find_movie_by_id(movies, movie_id):
+   id_search = movie_id
+   for item in movies:
+     movie_instance = item.split (",")
+     
+     for attribute in movie_instance:
+       id_number = attribute.find(id_search[0])
+       if id_number > -1:
+          movie_id = movie_instance
+       else:
+          movie_id = id_number
+   
+   print (movie_id)
+       
+   return (movie_id)
+
 
 
 
@@ -115,7 +131,6 @@ def save_movies(file_name,movies):
     line = ''.join(str(item))
     f.write(item + '\n')  
  print (number_of_movies, "movies have ben written to Movie catalog.")   
- 
 
 def print_menu():
    global selection
@@ -139,10 +154,13 @@ def print_menu():
 def main ():
   global display_menu
   global file_name
+  global movie_id
+  movie_id = "0"
   display_menu = True
   file_name = input("Enter the movie catalog filename: ")
 
   load_movies (file_name)
+
   while display_menu is True:
     print_menu ()
     match selection:
