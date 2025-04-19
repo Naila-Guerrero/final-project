@@ -1,5 +1,3 @@
-#Movie library
-
 import os
 import csv
 movies = []
@@ -7,6 +5,75 @@ movies = []
 AFFIRMATION = ("Yes", "Y")
 REFUTATION = ("No", "N")
 
+def get_availability(available):
+   if available == "True":
+      available = "Available"
+   elif available == "False":
+      available = "Rented"
+   return available
+
+def get_genre_name (genre):
+   match genre:
+      case "0":
+         genre = "Action"
+      case "1":
+         genre = "Comedy"
+      case "2":
+         genre = "Drama"
+      case "3":
+         genre = "Horror"
+      case "4":
+         genre = "Sci-Fi"
+      case "5":
+         genre = "Romance"
+      case "6":
+         genre = "Thriller"
+      case "7":
+         genre = "Animation"
+      case "8":
+         genre = "Documentary"
+      case "9":
+         genre = "Fantasy" 
+   
+   return genre
+ 
+
+
+def search_movies(movies,search_term):
+   item_found = False
+   title_printed = False
+   search_term = input("Enter your search term: ")
+   searching = search_term.upper()
+   print ("Searching for \"" + search_term + "\" in title, director, or genre...")
+
+   
+   for item in movies:
+     movie_instance = item.split (",")
+     translated_genre = get_genre_name(movie_instance[3])
+     translated_rent = get_availability(movie_instance[4])
+    
+     
+     for attribute in movie_instance:
+       attribute_search = attribute.upper()
+       search = attribute_search.find(searching)
+
+       if search > -1:
+          if title_printed is False:
+             print(format("ID", "<5"),format ("Title", "<25"),format("Director", "<20"),\
+              format("Genre","<12"),format("Availability","<15"),format("Price",">7"), format("# Rentals",">15"))
+             print("-" * 105)
+             title_printed = True
+             
+          item_found = True
+          print(format(movie_instance[0], "<5"),format (movie_instance[1], "<25"),format(movie_instance[2], "<20"),\
+              format(translated_genre,"<12"),format(translated_rent,"<12"),format(movie_instance[5],">10"), format(movie_instance[6],">15"))
+      
+     else:
+       pass
+     
+   if item_found is False: 
+    print("No matching movies found")
+   
 
 
 
