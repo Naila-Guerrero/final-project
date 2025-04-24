@@ -28,11 +28,15 @@ def load_movies(file_name): #Takes the name of the file containing movie data
      while line != '':
          line = line.rstrip() 
          parts = line.split(',') # This splits the line into a list of value
-
+         available = ''
          # Creates a list of Movie objects: 
-         # Id, title, director, genre, availabilty, price, rental_count
-         movie = Movie(int(parts[0]), parts[1], parts[2], int(parts[3]), parts[4], float(parts[5]), int(parts[6])) 
+         if parts[4] == 'True':
+            available = True
+         else:
+            available = False
 
+         movie = Movie(int(parts[0]), parts[1], parts[2], int(parts[3]), available, float(parts[5]), int(parts[6])) 
+      
          movies.append (movie)
 
          line = file_name.readline()
@@ -91,11 +95,10 @@ def search_movies(movies,search_term): # Searches for movies that match the sear
    print_movies(matched_movies)
   
 def find_movie_by_id(movies, movie_id): #Searches for movies that match the search term. 
-   found_id = -1
    for movie in movies:
       if movie.get_id() == movie_id:
-         movie_id = found_id 
-   return found_id
+         return movie_id
+   return -1
 
 def rent_movie(movies,movie_id): #Rents a movie by its ID if it is available.
    message = '' # Initializes the message
@@ -104,7 +107,7 @@ def rent_movie(movies,movie_id): #Rents a movie by its ID if it is available.
    while  index < len(movies) and found != True: # while the index is lower than the amount of movies and the movie_id hasn't been found
       film = movies[index] 
       if film.get_id() == movie_id: #check if the current ID is in the list
-         if film.get_availability() == True: # If it is and is available
+         if film.get_availability(): # If it is and is available
             film.borrow_movie() #Change the availability to false
             message = f"'{film.get_title()}' rented successfully." 
             found = True 
@@ -123,7 +126,7 @@ def return_movie(movies, movie_id):  #Returns a rented movie by its ID.  Cannot 
    while index <len(movies) and found != True: # while the index is lower than the amount of movies and the movie_id hasn't been found
       film = movies[index]
       if film.get_id() == movie_id:
-         if film.get_availability() == False:
+         if not film.get_availability():
             film.return_movie() #Change the availability to True
             message = f"'{film.get_title()}' was returned successfully."
             found = True 
