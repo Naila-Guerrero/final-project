@@ -50,7 +50,7 @@ def save_movies(file_name,movies): # Saves the list of Movie objects to a CSV fi
    f = open (file_name, 'w') 
    for item in movies:
       line = ''.join(str(item))
-      f.write(item + '\n')
+      f.write(str(item) + '\n')
 
    # number of movie lines written to file  
    return  number_of_movies
@@ -72,57 +72,30 @@ def print_menu(): # Displays the main menu and prompts the user for a valid choi
    print ("10) Display library summary")
    print ("0) Exit the system")
    selection = input("Enter your selection: ")
+   print()
 
    return selection
 
 def search_movies(movies,search_term): # Searches for movies that match the search term. 
-   item_found = False
-   title_printed = False
-   search_term = input("Enter your search term: ")
    searching = search_term.upper()
    print ("Searching for \"" + search_term + "\" in title, director, or genre...")
+   matched_movies = []
+   for movie in movies:
+      title = movie.get_title().upper()
+      director = movie.get_director().upper()
+      genre = movie.get_genre_name().upper()
 
+      if searching in title or searching in director or searching in genre:
+         matched_movies.append(movie)
    
-   for item in movies:
-     movie_instance = item.split (",")
-     translated_genre = Movie.get_genre_name(movie_instance[3])
-     translated_rent = Movie.get_availability(movie_instance[4])
-    
-     
-     for attribute in movie_instance:
-       attribute_search = attribute.upper()
-       search = attribute_search.find(searching)
-
-       if search > -1:
-         if title_printed is False:
-            print(format("ID", "<5"),format ("Title", "<25"),format("Director", "<20"),\
-            format("Genre","<12"),format("Availability","<15"),format("Price",">7"), format("# Rentals",">15"))
-            print("-" * 105)
-            title_printed = True
-             
-         item_found = True
-         print(format(movie_instance[0], "<5"),format (movie_instance[1], "<25"),format(movie_instance[2], "<20"),\
-              format(translated_genre,"<12"),format(translated_rent,"<12"),format(movie_instance[5],">10"), format(movie_instance[6],">15"))
-      
-     else:
-       pass
-     
-   if item_found is False: 
-    print("No matching movies found")
-   
+   print_movies(matched_movies)
+  
 def find_movie_by_id(movies, movie_id): #Searches for movies that match the search term. 
-   id_search = movie_id
-   for item in movies:
-     movie_instance = item.split (",")
-     
-     for attribute in movie_instance:
-      id_number = attribute.find(id_search[0])
-      if id_number > -1:
-         movie_id = movie_instance
-      else:
-         movie_id = id_number  
-      
-   return movie_id # the matched Movie object or 1 if not found
+   found_id = -1
+   for movie in movies:
+      if movie.get_id() == movie_id:
+         movie_id = found_id 
+   return found_id
 
 def rent_movie(movies,movie_id): #Rents a movie by its ID if it is available.
    message = '' # Initializes the message
@@ -162,6 +135,138 @@ def return_movie(movies, movie_id):  #Returns a rented movie by its ID.  Cannot 
       index += 1
    return message
 
+def add_movie(movies): #Adds a new movie to the library after prompting the user for details.  Cannot add a movie if a movie with that ID already exists in the list. 
+   movie_id = int(input("Enter movie ID: "))
+
+   film = find_movie_by_id(movies, movie_id)
+
+   if film != -1:
+      result = f"A movie with this ID {movie_id} already exists - cannot be added to the library"
+   else:
+      title = input("Enter title: ")
+      director = input("Enter director: ")
+      genre = get_genre()
+      price = float(input("Enter price: "))
+      new_movie = Movie(movie_id, title, director, genre, price = price)
+      movies.append(new_movie)
+      result = f"Movie '{title}' added successfully."
+   return result # A string indicating the result of the add attempt. 
+
+def remove_movie(movies): #Removes a movie from the library by its ID.  Cannot remove a movie if a movie with ID does not exist in the list. 
+   movie_id = int(input("Enter the movie ID to remove: "))
+
+   film = find_movie_by_id(movies, movie_id)
+
+   if film == -1:
+      result = f"Movie with ID {movie_id} does not exist."
+   else:
+      movies.remove(film)
+      result = f"Movie '{film.get_title()}' has been removed from library successfully."
+   return result #  A string indicating the result of the remove attempt. 
+
+def update_movie_details(movies): # Updates the details of a movie by its ID.  Cannot edit a movie if a movie with ID does not exist in the list.
+   movie_id = int(input("Enter the movie ID to update: "))
+   movie = find_movie_by_id(movies, movie_id)
+   if movie == -1:
+      message ="Movie with this ID does not exist."
+   else: 
+      print("Leave a field blank to keep the current values.")
+      new_title = input(f"Enter new title (current: {movie.get_title()}): ")
+      if new_title != '':
+         movie.set_title(new_title)
+
+      new_director = input(f"Enter new director (current: {movie.get_director()}): ")
+      if new_director != '':
+         movie.set_director(new_director)
+
+      genre_input = input(f"Enter new genre (current: {movie.get_genre()}) (Yes/Y, No/N))? ")
+      if genre_input != '':
+         if genre_input in AFFIRMATION:
+            genre = get_genre()
+            movie.set_genre(genre)
+
+      price_input = input(f"Enter new price (current: {movie.get_price()}): ")
+      if price_input != '':
+         movie.set_price(float(price_input))
+
+      rental_input = input(f"Enter new rental count (current: {movie.get_rental_count()}): ")
+      if rental_input != '':
+         movie.set_rental_count(int(rental_input))
+      message = f"Movie with ID {movie_id}' is updated successfully"
+
+   #A string indicating the result of the update attempt. 
+   return message
+
+def get_genre(): #Displays the genre codes and descriptions and prompts the user for a valid choice. 
+   print()
+   print('  Genres')
+   for key, values in Movie.GENRE_NAMES.items():
+      print(f'  {key}) {values}')
+   genre = int(input('   Choose genre(0-9): '))
+   #  The user's valid menu choice as a string. 
+   return genre
+
+def list_movies_by_genre(movies): # Lists all movies of a specified genre. Displays a list of movies in the specified genre, or no movies found 
+   same_genre = []
+   genre = get_genre()
+   while genre not in Movie.GENRE_NAMES:
+      print("Invalid Genre: Enter a valid genre (0-9)")
+      genre = input('Choose genre(0-9): ')
+   else: 
+      for movie in movies:
+         if movie.get_genre() == genre:
+            same_genre.append(movie)
+      print_movies(same_genre)
+
+def check_availability_by_genre(movies): # Checks and displays the availability of movies in a specified genre. Displays a list of movies that are available in the specified genre
+   same_available_genre = []
+   genre = get_genre()
+   while genre not in Movie.GENRE_NAMES:
+      print("Invalid Genre: Enter a valid genre (0-9)")
+      genre = input('Choose genre(0-9): ')
+   else: 
+      for movie in movies:
+         if movie.get_genre() == genre:
+            if movie.get_availability() == 'Available':
+               same_available_genre.append(movie)
+      print_movies(same_available_genre)
+         
+def display_library_summary(movies): #  Displays a summary of the library, including the total number of movies, number of available movies, and number of rented movies. 
+   total_movies = len(movies)
+   available_movies = []
+   rented_movies = []
+
+   for movie in movies:
+      if movie.get_availability() == 'Available':
+         available_movies.append(movie)
+      else: 
+         rented_movies.append(movie)
+
+   total_available = len(available_movies)
+   total_rented = len(rented_movies)
+
+   print(f'{"Total movies":<16}:{total_movies:>6}')
+   print(f'{"Available movies":<16}:{total_available:>6}')
+   print(f'{"Rented movies":<16}:{total_rented:>6}')
+
+def popular_movies(movies): #Displays all the movies that have a rental_count >= to the entered value
+   rentals = int(input('Enter the minimum number of rentals for the movies you want to view: '))
+   popular_films = []
+   for movie in movies:
+      if movie.get_rental_count() >= rentals:
+         popular_films.append(movie)
+   print_movies(popular_films)
+
+def print_movies(movies): #  Prints a list of movies in a formatted table. 
+   if len(movies) == 0:
+      print('No movies found.')
+   else:
+      print(f'{'ID':<10}{'Title':<30}{'Director':<25}{'Genre':<12}{'Availability':<19}{'Price':<9}{'# Rentals':<9}')
+      print('-'*113)
+      for movie in movies:
+         str_genre = Movie.GENRE_NAMES[movie.get_genre()]
+         print(f'{movie.get_id():<10}{movie.get_title():<30}{movie.get_director():<25}{str_genre:<12}{movie.get_availability():<19}{movie.get_price():<9}{movie.get_rental_count():>9}')
+
 def main ():
   global display_menu
   global file_name
@@ -172,12 +277,12 @@ def main ():
 
   load_movies (file_name)
 
-
   while display_menu is True:
    selection = print_menu ()
    match selection:
       case "1":
-         search_movies(movies, search_term = '')
+         search_term = input("Enter your search term: ")
+         search_movies(movies, search_term)
       case "2":
          input_id = int(input('Enter the movie ID to rent: '))
          rent_result = rent_movie(movies,input_id)
@@ -187,33 +292,31 @@ def main ():
          rent_result = return_movie(movies,input_id)
          print(rent_result)
       case "4":
-         pass
+         new_movie = add_movie(movies)
+         print(new_movie)
       case "5":
-         pass
+         deleted_movie = remove_movie(movies)
+         print(deleted_movie) 
       case "6":
-         pass
+         update = update_movie_details(movies)
+         print(update)
       case "7":
-         pass
+         list_movies_by_genre(movies)
       case "8":
-         pass
+         popular_movies(movies)
       case "9":
-         pass
+         check_availability_by_genre(movies)
       case "10":
-         pass
+         display_library_summary(movies)
       case "0":
          user_input = input ("Would you like to update the catalog (Yes/Y, No/N))? ")
          if user_input in (AFFIRMATION):
-            save_movies (file_name, movies)
+            number_of_movies = save_movies (file_name, movies)
+            print(f'{number_of_movies} movies have been written to Movie Catalog.')
+
          display_menu = False
-
-
-
   print ("Movie Library System Closed Successfully")
      
-
-
-
-
 
 if __name__=="__main__":
    main () 
